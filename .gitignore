@@ -1,0 +1,10 @@
+# Backend
+MusicRoomBackend/node_modules/
+MusicRoomBackend/.env
+
+# Xcode
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+xcuserdata/
+.DS_Store
+DerivedData/
