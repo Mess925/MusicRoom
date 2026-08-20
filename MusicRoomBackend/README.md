@@ -8,7 +8,8 @@ Docker Compose for the dev environment.
 > is live, but there is **no domain logic, no ORM models and no migrations yet**.
 > The only endpoints are a service banner and a health check. See
 > [What's included](#whats-included) for the exact inventory and
-> [Not built yet](#not-built-yet) for what's deliberately missing.
+> [Not built yet](#not-built-yet) for what's deliberately missing. The test
+> harness is wired up — see [Testing](#testing).
 
 ---
 
@@ -101,6 +102,8 @@ docker compose restart api          # force-restart the API
 docker compose build api            # rebuild after a dependency change
 docker compose down                 # stop everything
 
+./test.sh                           # run the tests (see Testing)
+
 # Shell into a service
 docker compose exec api bash
 docker compose exec postgres psql -U musicroom -d musicroom
@@ -152,6 +155,88 @@ uv run uvicorn app.main:app --reload --app-dir src
 
 ---
 
+## Testing
+
+`pytest` + `pytest-asyncio`, driven by one script at the repo root:
+
+```sh
+./test.sh                    # unit tests
+./test.sh --cov              # unit tests + coverage report
+./test.sh --integration      # only the integration tests
+./test.sh --all              # unit + integration
+./test.sh -- -k health -vv   # anything after `--` is passed to pytest
+./test.sh --help             # all options
+```
+
+The script picks its own runner: **host** if you have `uv` installed, otherwise
+the **`api` container** — reusing the running one when the stack is up, or
+starting a throwaway one when it is not. Force either with `--host` / `--docker`.
+
+### Two kinds of test
+
+| Kind            | Needs Postgres/Redis? | How                                                                       |
+| --------------- | --------------------- | ------------------------------------------------------------------------- |
+| **unit**        | No                    | `get_session` / `get_redis` are replaced with the fakes in `tests/fakes.py` via `app.dependency_overrides` |
+| **integration** | Yes                   | Marked `@pytest.mark.integration`; talk to the real engine and Redis pool  |
+
+Integration tests are **deselected by default** (`-m "not integration"`), so the
+default run needs nothing running and finishes in well under a second.
+`--integration` / `--all` bring up Postgres and Redis first (Compose waits for
+their healthchecks).
+
+### Writing a test
+
+Request the `client` fixture — it is an `httpx.AsyncClient` bound to the real
+app in-process, with healthy fake backends already installed. `asyncio_mode` is
+`auto`, so `async def` tests need no marker:
+
+```python
+async def test_rooms_are_listed(client):
+    response = await client.get("/rooms")
+
+    assert response.status_code == 200
+```
+
+To exercise a failure path, swap in a failing fake before the request:
+
+```python
+from tests.fakes import FakeRedis
+
+async def test_degrades_without_cache(client, override):
+    override(redis=FakeRedis(fail=True))
+
+    assert (await client.get("/health")).status_code == 503
+```
+
+Fixtures live in `tests/conftest.py`:
+
+| Fixture      | What it gives you                                                        |
+| ------------ | ------------------------------------------------------------------------ |
+| `client`     | `AsyncClient` on the app, with healthy fake Postgres + Redis              |
+| `raw_client` | `AsyncClient` on the app with **no** overrides — real services (integration) |
+| `app`        | The `FastAPI` instance; overrides are cleared after each test             |
+| `session`    | The healthy `FakeSession` behind `client` — inspect `.statements`          |
+| `redis`      | The healthy `FakeRedis` behind `client` — inspect `.pings` / `.store`      |
+| `override`   | `override(session=..., redis=...)` to install different fakes             |
+
+`tests/conftest.py` pins `APP_NAME`, `API_VERSION`, `ENVIRONMENT`, `DEBUG` and
+`DOCS_ENABLED` in the environment **before** importing `app`, because
+`Settings` is built and cached at import time — so results do not depend on your
+local `.env`. `DATABASE_URL` and `REDIS_URL` are left alone: unit tests never
+connect, and integration tests should use the real ones.
+
+The whole suite shares **one event loop**
+(`asyncio_default_test_loop_scope = "session"`). The async engine and Redis
+connection pool are module-level singletons that bind to the loop that first
+uses them, so per-test loops would hand later tests connections from a closed
+loop.
+
+As the fakes only implement what the routes currently call, extend
+`tests/fakes.py` as routes start committing, flushing or querying models — a
+fake that lags behind the real client is worse than no fake at all.
+
+---
+
 ## What's included
 
 ### Services
@@ -198,6 +283,10 @@ orchestrator or uptime monitor.
 | `pydantic`          | 2.13.4    | Schemas and validation                  |
 | `pydantic-settings` | 2.15.0    | Env-driven configuration                |
 | `ruff`              | 0.16.3    | Lint + format (dev group)               |
+| `pytest`            | 9.1.1     | Test runner (dev group)                 |
+| `pytest-asyncio`    | 1.4.0     | `async def` tests, `asyncio_mode = auto` (dev group) |
+| `pytest-cov`        | 7.1.0     | Coverage reporting (dev group)           |
+| `httpx`             | 0.28.1    | In-process ASGI test client (dev group)  |
 
 Python 3.13 on `python:3.13-slim`. Exact pins live in `uv.lock`.
 
@@ -211,6 +300,15 @@ Python 3.13 on `python:3.13-slim`. Exact pins live in `uv.lock`.
 ├── uv.lock                 # resolved versions — committed, used with --frozen
 ├── .env.example            # every configurable value, with defaults
 ├── REQUIREMENT.md          # the project spec this backend implements
+├── test.sh                 # test runner — host or container, unit or integration
+├── tests/
+│   ├── conftest.py         # env pinning, fake-backed client, override helper
+│   ├── fakes.py            # FakeSession / FakeRedis stand-ins
+│   ├── test_app.py         # wiring: routes mounted, OpenAPI schema, docs pages
+│   ├── test_config.py      # Settings defaults, DSN parsing, caching
+│   ├── test_health.py      # GET /health, healthy and degraded
+│   ├── test_root.py        # GET /
+│   └── integration/        # marked `integration` — real Postgres + Redis
 └── src/app/
     ├── main.py             # FastAPI app, OpenAPI wiring, lifespan cleanup
     ├── api/
@@ -293,7 +391,8 @@ Deliberately absent — this is the scaffold, not the application:
 - **Auth.** No users, sessions, JWT, or social login.
 - **Domain endpoints.** None of the services in `REQUIREMENT.md` (track vote,
   control delegation, playlist editor) exist.
-- **Tests.** No test suite or CI.
+- **CI.** No pipeline — the suite exists (`./test.sh`) but nothing runs it on
+  push.
 - **Real-time transport.** No WebSocket layer yet.
 
 ## Troubleshooting
@@ -305,3 +404,5 @@ Deliberately absent — this is the scaffold, not the application:
 | Code edits do nothing                         | Confirm the `./src:/app/src` mount and check `docker compose logs -f api` for reload lines |
 | Build fails on `uv sync --frozen`             | `uv.lock` is stale — re-run `uv lock` and rebuild                    |
 | `/docs` loads blank                           | Swagger UI/ReDoc fetch their JS/CSS from the jsDelivr CDN; the browser needs outbound internet |
+| `./test.sh` says `no module named pytest`     | The image predates the dev deps — `docker compose build api` |
+| Integration tests fail with `database: error` | Postgres/Redis are not up: `docker compose up -d postgres redis` |
