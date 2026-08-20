@@ -1,6 +1,8 @@
-# Backend
-MusicRoomBackend/node_modules/
+# Backend (Python)
+MusicRoomBackend/venv/
 MusicRoomBackend/.env
+MusicRoomBackend/__pycache__/
+MusicRoomBackend/**/__pycache__/
 
 # Xcode
 *.xcodeproj/*
