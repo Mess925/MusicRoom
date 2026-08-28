@@ -51,11 +51,11 @@ SERVERS = [
 
 # Swagger UI front-end options: https://swagger.io/docs/open-source-tools/swagger-ui/usage/configuration/
 SWAGGER_UI_PARAMETERS = {
-    "docExpansion": "list",          # expand tag groups, collapse operations
-    "defaultModelsExpandDepth": 1,   # show the schema list, collapsed
+    "docExpansion": "list",  # expand tag groups, collapse operations
+    "defaultModelsExpandDepth": 1,  # show the schema list, collapsed
     "displayRequestDuration": True,  # show ms taken by "Try it out" calls
-    "filter": True,                  # search box over operations
-    "persistAuthorization": True,    # keep credentials across reloads
-    "tryItOutEnabled": True,         # "Try it out" active by default
+    "filter": True,  # search box over operations
+    "persistAuthorization": True,  # keep credentials across reloads
+    "tryItOutEnabled": True,  # "Try it out" active by default
     "syntaxHighlight.theme": "obsidian",
 }

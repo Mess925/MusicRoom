@@ -17,6 +17,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "httpx>=0.28.1",
+    "pre-commit>=4.6.2",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
     "pytest-cov>=7.1.0",
@@ -29,6 +30,8 @@ package = false
 [tool.ruff]
 line-length = 100
 src = ["src", "."]
+# Prose files carry illustrative snippets, not code held to formatter/lint rules.
+extend-exclude = ["*.md"]
 
 [tool.pytest.ini_options]
 minversion = "9.0"
