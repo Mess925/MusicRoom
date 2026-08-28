@@ -16,7 +16,7 @@ def get_redis_client() -> Redis:
     return Redis(connection_pool=pool)
 
 
-async def get_redis() -> AsyncGenerator[Redis, None]:
+async def get_redis() -> AsyncGenerator[Redis]:
     """FastAPI dependency yielding a Redis client."""
     client = get_redis_client()
     try:

@@ -1,0 +1,47 @@
+# Pre-commit hooks for the Music Room repo.
+#
+#   uv run --project MusicRoomBackend pre-commit install
+#
+# installs both the pre-commit and pre-push hooks. Only the FastAPI backend and
+# the repo's config/docs are covered — the iOS app under MusicRoom/ is excluded.
+
+default_install_hook_types: [pre-commit, pre-push]
+exclude: '^MusicRoom/'
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+      - id: mixed-line-ending
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.3
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+        files: '^MusicRoomBackend/.*\.py$'
+      - id: ruff-format
+        files: '^MusicRoomBackend/.*\.py$'
+
+  - repo: local
+    hooks:
+      - id: uv-lock-check
+        name: uv.lock in sync with pyproject.toml
+        entry: uv lock --check --project MusicRoomBackend
+        language: system
+        pass_filenames: false
+        files: '^MusicRoomBackend/(pyproject\.toml|uv\.lock)$'
+
+      - id: backend-unit-tests
+        name: backend unit tests
+        entry: bash -c 'cd MusicRoomBackend && ./test.sh --host'
+        language: system
+        pass_filenames: false
+        files: '^MusicRoomBackend/.*\.py$'
+        stages: [pre-push]

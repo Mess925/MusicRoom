@@ -1,0 +1,88 @@
+name: Backend Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "MusicRoomBackend/**"
+      - ".github/workflows/backend-tests.yml"
+  pull_request:
+    paths:
+      - "MusicRoomBackend/**"
+      - ".github/workflows/backend-tests.yml"
+
+concurrency:
+  group: backend-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: MusicRoomBackend
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
+          enable-cache: true
+          cache-dependency-glob: "MusicRoomBackend/uv.lock"
+      - run: uv sync --frozen
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
+          enable-cache: true
+          cache-dependency-glob: "MusicRoomBackend/uv.lock"
+      - run: uv sync --frozen
+      - name: Unit tests
+        run: ./test.sh --host --cov
+
+  integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: musicroom
+          POSTGRES_PASSWORD: musicroom
+          POSTGRES_DB: musicroom
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U musicroom -d musicroom"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:8-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql+asyncpg://musicroom:musicroom@localhost:5432/musicroom
+      REDIS_URL: redis://localhost:6379/0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
+          enable-cache: true
+          cache-dependency-glob: "MusicRoomBackend/uv.lock"
+      - run: uv sync --frozen
+      - name: Apply migrations
+        run: uv run alembic upgrade head
+      - name: Integration tests
+        run: ./test.sh --host --integration

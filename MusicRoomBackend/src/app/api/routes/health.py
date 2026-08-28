@@ -69,13 +69,13 @@ async def health(
     database: Status = "ok"
     try:
         await session.execute(text("SELECT 1"))
-    except Exception:
+    except Exception:  # noqa: BLE001 — any failure means the dependency is unhealthy
         database = "error"
 
     cache: Status = "ok"
     try:
         await redis.ping()
-    except Exception:
+    except Exception:  # noqa: BLE001 — any failure means the dependency is unhealthy
         cache = "error"
 
     healthy = database == "ok" and cache == "ok"
