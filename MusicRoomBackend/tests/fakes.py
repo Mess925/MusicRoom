@@ -14,16 +14,18 @@ class FakeSession:
     """Stands in for ``AsyncSession`` with an in-memory identity map.
 
     Supports the slice the routes touch: ``execute`` (health check), and
-    ``add`` / ``commit`` / ``get`` (room create + join). ``commit`` moves added
-    objects into the store keyed by ``(class name, id)``, so a create followed
-    by a ``get`` in the same test round-trips. Set ``fail=True`` to make every
-    operation raise, mimicking an unreachable database.
+    ``add`` / ``commit`` / ``get`` / ``delete`` (room create, join, delete).
+    ``commit`` moves added objects into the store keyed by ``(class name, id)``,
+    so a create followed by a ``get`` in the same test round-trips; ``delete``
+    drops the object from the store. Set ``fail=True`` to make every operation
+    raise, mimicking an unreachable database.
     """
 
     def __init__(self, *, fail: bool = False) -> None:
         self.fail = fail
         self.statements: list[str] = []
         self.added: list[Any] = []
+        self.deleted: list[Any] = []
         self.commits = 0
         self._store: dict[tuple[str, Any], Any] = {}
 
@@ -45,6 +47,11 @@ class FakeSession:
             self._store[(type(obj).__name__, getattr(obj, "id", None))] = obj
         self.added.clear()
         self.commits += 1
+
+    async def delete(self, obj: Any) -> None:
+        self._guard()
+        self.deleted.append(obj)
+        self._store.pop((type(obj).__name__, getattr(obj, "id", None)), None)
 
     async def refresh(self, obj: Any, *args: Any, **kwargs: Any) -> None:
         self._guard()

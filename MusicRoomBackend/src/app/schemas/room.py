@@ -28,6 +28,19 @@ class RoomJoinRequest(BaseModel):
     access_code: str | None = Field(default=None)
 
 
+class RoomDeleteRequest(BaseModel):
+    """Body for deleting a room.
+
+    ``confirmation_code`` must match the room's access code (private rooms) or
+    its id as a string (public rooms). Knowing that value is what identifies the
+    caller as the owner — there is no auth layer yet.
+    """
+
+    confirmation_code: str = Field(
+        description="Access code for a private room, or the room id for a public one.",
+    )
+
+
 class RoomDetail(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
