@@ -34,6 +34,11 @@ class Settings(BaseSettings):
 
     redis_url: RedisDsn = Field(default="redis://redis:6379/0")
 
+    # Spotify Web API (client-credentials flow). Empty means the playlist
+    # import / add-track routes answer 503.
+    spotify_client_id: str = Field(default="")
+    spotify_client_secret: str = Field(default="")
+
 
 @lru_cache
 def get_settings() -> Settings:

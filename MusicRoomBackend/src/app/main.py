@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.api.router import api_router
-from app.core import openapi
+from app.core import openapi, spotify
 from app.core.config import settings
 from app.core.redis import pool
 from app.db.session import engine
@@ -15,6 +15,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     yield
     await engine.dispose()
     await pool.aclose()
+    await spotify.aclose()
 
 
 docs_on = settings.docs_enabled

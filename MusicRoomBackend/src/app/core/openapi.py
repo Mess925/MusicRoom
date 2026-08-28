@@ -33,6 +33,12 @@ TAGS_METADATA = [
         "description": "Create and join listening rooms. Public rooms join with just "
         "the room id; private rooms also need the access code generated at creation.",
     },
+    {
+        "name": "playlists",
+        "description": "Each room's playlist. Built from Spotify — import a whole "
+        "playlist by link, or append tracks one at a time. The backend resolves "
+        "every Spotify link itself.",
+    },
 ]
 
 CONTACT = {

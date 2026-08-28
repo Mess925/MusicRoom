@@ -106,6 +106,9 @@ async def join_room(
     return room
 
 
+# TODO: add owner check to delete_room endpoint, so that only the owner can delete the room
+
+
 def _confirmation_code(room: Room) -> str:
     """The value a caller must echo back to delete ``room``.
 

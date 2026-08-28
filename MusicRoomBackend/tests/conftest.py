@@ -23,9 +23,10 @@ from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
 from app.core.redis import get_redis
+from app.core.spotify import get_spotify
 from app.db.session import get_session
 from app.main import app as fastapi_app
-from tests.fakes import FakeRedis, FakeSession
+from tests.fakes import FakeRedis, FakeSession, FakeSpotify
 
 Override = Callable[..., None]
 
@@ -50,8 +51,14 @@ def redis() -> FakeRedis:
 
 
 @pytest.fixture
+def spotify() -> FakeSpotify:
+    """A configured fake Spotify client with no canned playlists / tracks."""
+    return FakeSpotify()
+
+
+@pytest.fixture
 def override(app: FastAPI) -> Override:
-    """Point ``get_session`` / ``get_redis`` at specific fakes.
+    """Point ``get_session`` / ``get_redis`` / ``get_spotify`` at specific fakes.
 
     Usage::
 
@@ -62,11 +69,14 @@ def override(app: FastAPI) -> Override:
         *,
         session: FakeSession | None = None,
         redis: FakeRedis | None = None,
+        spotify: FakeSpotify | None = None,
     ) -> None:
         if session is not None:
             app.dependency_overrides[get_session] = lambda: session
         if redis is not None:
             app.dependency_overrides[get_redis] = lambda: redis
+        if spotify is not None:
+            app.dependency_overrides[get_spotify] = lambda: spotify
 
     return _override
 
@@ -76,14 +86,16 @@ async def client(
     app: FastAPI,
     session: FakeSession,
     redis: FakeRedis,
+    spotify: FakeSpotify,
     override: Override,
 ) -> AsyncIterator[AsyncClient]:
     """HTTP client wired to the app in-process, with healthy fake backends.
 
-    No sockets, no Postgres, no Redis. Tests needing a failing dependency call
-    ``override(...)`` before issuing the request — the later override wins.
+    No sockets, no Postgres, no Redis, no Spotify. Tests needing a failing or
+    pre-loaded dependency call ``override(...)`` before issuing the request — the
+    later override wins.
     """
-    override(session=session, redis=redis)
+    override(session=session, redis=redis, spotify=spotify)
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         yield ac
 
