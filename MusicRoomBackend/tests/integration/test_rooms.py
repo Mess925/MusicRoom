@@ -42,3 +42,23 @@ async def test_private_room_requires_its_generated_code(raw_client: AsyncClient)
         assert ok.status_code == 200
     finally:
         await _delete(created["id"])
+
+
+async def test_delete_private_room_removes_it(raw_client: AsyncClient) -> None:
+    created = (await raw_client.post("/rooms/private", json={})).json()
+    try:
+        bad = await raw_client.request(
+            "DELETE", f"/rooms/{created['id']}", json={"confirmation_code": "WRONG1"}
+        )
+        assert bad.status_code == 403
+
+        gone = await raw_client.request(
+            "DELETE",
+            f"/rooms/{created['id']}",
+            json={"confirmation_code": created["access_code"]},
+        )
+        assert gone.status_code == 204
+
+        assert (await raw_client.post(f"/rooms/{created['id']}/join")).status_code == 404
+    finally:
+        await _delete(created["id"])

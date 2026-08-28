@@ -93,3 +93,67 @@ async def test_join_with_a_non_uuid_id_is_422(client: AsyncClient) -> None:
     response = await client.post("/rooms/not-a-uuid/join")
 
     assert response.status_code == 422
+
+
+async def test_delete_public_room_with_its_id_as_the_confirmation_code(
+    client: AsyncClient, session: FakeSession
+) -> None:
+    room_id = (await client.post("/rooms/public", json={})).json()["id"]
+
+    response = await client.request(
+        "DELETE", f"/rooms/{room_id}", json={"confirmation_code": room_id}
+    )
+
+    assert response.status_code == 204
+    assert len(session._store) == 0
+    assert (await client.post(f"/rooms/{room_id}/join")).status_code == 404
+
+
+async def test_delete_private_room_with_its_access_code(client: AsyncClient) -> None:
+    created = (await client.post("/rooms/private", json={})).json()
+
+    response = await client.request(
+        "DELETE",
+        f"/rooms/{created['id']}",
+        json={"confirmation_code": created["access_code"]},
+    )
+
+    assert response.status_code == 204
+
+
+async def test_delete_public_room_is_403_with_a_wrong_code(client: AsyncClient) -> None:
+    room_id = (await client.post("/rooms/public", json={})).json()["id"]
+
+    response = await client.request(
+        "DELETE", f"/rooms/{room_id}", json={"confirmation_code": "not-the-id"}
+    )
+
+    assert response.status_code == 403
+
+
+async def test_delete_private_room_is_403_with_the_room_id_instead_of_the_code(
+    client: AsyncClient,
+) -> None:
+    room_id = (await client.post("/rooms/private", json={})).json()["id"]
+
+    response = await client.request(
+        "DELETE", f"/rooms/{room_id}", json={"confirmation_code": room_id}
+    )
+
+    assert response.status_code == 403
+
+
+async def test_delete_room_requires_a_confirmation_code(client: AsyncClient) -> None:
+    room_id = (await client.post("/rooms/public", json={})).json()["id"]
+
+    response = await client.request("DELETE", f"/rooms/{room_id}", json={})
+
+    assert response.status_code == 422
+
+
+async def test_delete_unknown_room_is_404(client: AsyncClient) -> None:
+    response = await client.request(
+        "DELETE", f"/rooms/{uuid.uuid4()}", json={"confirmation_code": "whatever"}
+    )
+
+    assert response.status_code == 404
