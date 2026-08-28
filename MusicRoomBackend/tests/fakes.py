@@ -11,20 +11,50 @@ from typing import Any
 
 
 class FakeSession:
-    """Stands in for ``AsyncSession``: records statements, optionally fails.
+    """Stands in for ``AsyncSession`` with an in-memory identity map.
 
-    Only ``execute`` is implemented — that is all the current routes use.
+    Supports the slice the routes touch: ``execute`` (health check), and
+    ``add`` / ``commit`` / ``get`` (room create + join). ``commit`` moves added
+    objects into the store keyed by ``(class name, id)``, so a create followed
+    by a ``get`` in the same test round-trips. Set ``fail=True`` to make every
+    operation raise, mimicking an unreachable database.
     """
 
     def __init__(self, *, fail: bool = False) -> None:
         self.fail = fail
         self.statements: list[str] = []
+        self.added: list[Any] = []
+        self.commits = 0
+        self._store: dict[tuple[str, Any], Any] = {}
+
+    def _guard(self) -> None:
+        if self.fail:
+            raise ConnectionError("database unreachable")
 
     async def execute(self, statement: Any, *args: Any, **kwargs: Any) -> Any:
         self.statements.append(str(statement))
-        if self.fail:
-            raise ConnectionError("database unreachable")
+        self._guard()
         return None
+
+    def add(self, obj: Any) -> None:
+        self.added.append(obj)
+
+    async def commit(self) -> None:
+        self._guard()
+        for obj in self.added:
+            self._store[(type(obj).__name__, getattr(obj, "id", None))] = obj
+        self.added.clear()
+        self.commits += 1
+
+    async def refresh(self, obj: Any, *args: Any, **kwargs: Any) -> None:
+        self._guard()
+
+    async def rollback(self) -> None:
+        self.added.clear()
+
+    async def get(self, entity: Any, ident: Any, *args: Any, **kwargs: Any) -> Any:
+        self._guard()
+        return self._store.get((entity.__name__, ident))
 
 
 class FakeRedis:

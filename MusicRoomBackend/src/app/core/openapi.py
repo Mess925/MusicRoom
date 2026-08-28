@@ -28,6 +28,11 @@ TAGS_METADATA = [
         "name": "root",
         "description": "Service banner and pointers to the API reference.",
     },
+    {
+        "name": "rooms",
+        "description": "Create and join listening rooms. Public rooms join with just "
+        "the room id; private rooms also need the access code generated at creation.",
+    },
 ]
 
 CONTACT = {
