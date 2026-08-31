@@ -10,6 +10,6 @@ import Foundation
 enum AppState {
     case splash
     case onboarding
-//    case welcome
+    case welcome
 //    case home
 }

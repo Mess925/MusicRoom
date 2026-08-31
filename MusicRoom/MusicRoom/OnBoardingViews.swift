@@ -10,6 +10,7 @@ import SwiftUI
 
 struct OnBoardingViews: View {
     @Binding var appState: AppState
+    @Binding var alreadyInstalled: Bool
     
     var body: some View {
         Text("On Borading Views")
@@ -17,5 +18,5 @@ struct OnBoardingViews: View {
 }
 
 #Preview{
-    OnBoardingViews(appState: .constant(.onboarding))
+    OnBoardingViews(appState: .constant(.onboarding), alreadyInstalled: .constant(false))
 }
