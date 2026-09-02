@@ -11,7 +11,7 @@ import SwiftUI
 struct LogoView: View {
     var body: some View {
         Image(systemName: "beats.headphones")
-            .font(.system(size: 80, weight: .bold, design: .serif))
+            .font(.system(size: 60, weight: .bold, design: .serif))
             .foregroundStyle(CustomColors.accentPrimary)
             .italic()
     }
@@ -28,20 +28,12 @@ struct SplashView: View {
             CustomColors.background
                 .ignoresSafeArea()
 
-            VStack(spacing: 12) {
                 LogoView()
                     .rotation3DEffect(
                         .degrees(rotationAngle),
                         axis: (x: 0, y: 1, z: 0),
                         perspective: 0.5
                     )
-
-                Text("MusicRoom")
-                    .font(.title3)
-                    .fontWeight(.medium)
-                    .foregroundStyle(CustomColors.textSecondary)
-                    .tracking(2)
-            }
         }
         .onAppear {
             withAnimation(.linear(duration: 3.0)) {
