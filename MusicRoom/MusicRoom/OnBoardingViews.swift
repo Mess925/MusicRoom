@@ -54,7 +54,7 @@ struct OnBoardingViews: View {
     var body: some View {
         ZStack {
             CustomColors.background
-                .ignoresSafeArea()
+                .ignoresSafeArea(.all)
             VStack(spacing: 0){
                 HStack(spacing: 4){
                     ForEach(pages.indices, id: \.self) { page in

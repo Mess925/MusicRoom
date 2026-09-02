@@ -20,8 +20,8 @@ struct RootView: View {
             OnBoardingViews(appState: $appState, alreadyInstalled: $alreadyInstalled)
         case .welcome:
             WelcomeView(appState: $appState)
-//        case .home:
-//            <#code#>
+        case .home:
+            HomeView(appState: $appState)
         }
     }
 }
