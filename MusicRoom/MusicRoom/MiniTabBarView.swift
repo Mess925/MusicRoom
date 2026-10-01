@@ -26,7 +26,7 @@ enum MusicTab: CaseIterable {
         case .vote: "music.note"
         case .control: "slider.horizontal.3"
         case .playlist: "music.note.list"
-        case .profile: "person.fill"
+        case .profile: "person"
         }
     }
 }
@@ -47,7 +47,7 @@ struct MiniTabBarView: View {
         .background(CustomColors.background.ignoresSafeArea())
         .safeAreaInset(edge: .bottom) {
             LiquidGlassTabBar(selectedTab: $selectedTab)
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 12)
                 .padding(.bottom, 10)
         }
         .ignoresSafeArea(.keyboard)
@@ -69,6 +69,7 @@ struct LiquidGlassTabBar: View {
                     VStack(spacing: 4) {
                         Image(systemName: tab.icon)
                             .font(.system(size: 20, weight: .medium))
+                            .frame(width: 24, height: 20)
                         Text(tab.title)
                             .font(.caption2.weight(.medium))
                     }
