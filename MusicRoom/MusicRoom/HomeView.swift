@@ -11,6 +11,6 @@ import SwiftUI
 struct HomeView : View {
     @Binding var appState: AppState
     var body: some View {
-        Text("Home View")
+        MiniTabBarView()
     }
 }
