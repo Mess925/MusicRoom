@@ -7,11 +7,12 @@
 
 import Foundation
 
-struct Event: Identifiable {
+struct MusicEvent: Identifiable {
     let id = UUID()
     var name: String
     var ownerName: String
     var isPublic: Bool = true
     var memberCount: Int = 0
     var nowPlaying: String? = nil
+    var imageData: Data? = nil
 }
