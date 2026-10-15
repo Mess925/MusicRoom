@@ -26,7 +26,7 @@ struct SignInView: View {
                                 .font(.system(size: 28, weight: .bold, design: .serif))
                                 .foregroundStyle(CustomColors.textPrimary)
                             
-                            Text("Sign in to continue tracking your reads.")
+                            Text("Sign in to enjoy the music with your loved ones.")
                                 .font(.subheadline)
                                 .foregroundStyle(CustomColors.textSecondary)
                         }

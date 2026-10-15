@@ -28,7 +28,7 @@ struct SignUpView: View {
                                 .font(.system(size: 28, weight: .bold, design: .serif))
                                 .foregroundStyle(CustomColors.textPrimary)
                             
-                            Text("Start tracking what you read, today.")
+                            Text("Start enjoying music with your friends")
                                 .font(.subheadline)
                                 .foregroundStyle(CustomColors.textSecondary)
                         }
