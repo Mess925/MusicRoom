@@ -67,8 +67,6 @@ struct MusicEvent: Identifiable {
     var hasEnded: Bool {
         endsAt.map { $0 <= .now } ?? false
     }
-
-    /// "Ends in 1h 20m", "Starts in 3h", "Ended".
     var timeLabel: String? {
         let formatter = DateComponentsFormatter()
         formatter.unitsStyle = .abbreviated
