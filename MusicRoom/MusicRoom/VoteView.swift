@@ -312,11 +312,16 @@ struct EventRow: View {
     @ViewBuilder
     private var details: some View {
         if let nowPlaying = event.nowPlaying, event.isLive {
-            Label(nowPlaying, systemImage: "waveform")
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(CustomColors.accentPrimary)
-                .lineLimit(1)
-                .symbolEffect(.variableColor.iterative, options: .repeating)
+            HStack(spacing: 8) {
+                Label(nowPlaying, systemImage: "waveform")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(event.playingGenre?.mood.accent ?? CustomColors.accentPrimary)
+                    .lineLimit(1)
+                    .symbolEffect(.variableColor.iterative, options: .repeating)
+                if let genre = event.playingGenre {
+                    GenreChip(genre: genre)
+                }
+            }
         }
 
         if let top = event.topTrack, !event.hasEnded {
@@ -363,6 +368,20 @@ struct EventRow: View {
             return "Come listen with me on MusicRoom! Access code: \(code)"
         }
         return "Come listen with me on MusicRoom!"
+    }
+}
+
+struct GenreChip: View {
+    let genre: Genre
+
+    var body: some View {
+        Text(genre.title)
+            .font(.caption2.weight(.semibold))
+            .padding(.horizontal, 7)
+            .padding(.vertical, 2)
+            .background(Capsule().fill(genre.mood.accent.opacity(0.15)))
+            .foregroundStyle(genre.mood.accent)
+            .fixedSize()
     }
 }
 

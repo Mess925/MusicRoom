@@ -37,6 +37,24 @@ enum VoteRule: String, CaseIterable, Identifiable {
     }
 }
 
+enum Genre: String, CaseIterable, Identifiable {
+    case disco, electronic, pop, hipHop, rock, jazz, lofi
+
+    var id: Self { self }
+
+    var title: String {
+        switch self {
+        case .disco: "Disco"
+        case .electronic: "Electronic"
+        case .pop: "Pop"
+        case .hipHop: "Hip-Hop"
+        case .rock: "Rock"
+        case .jazz: "Jazz"
+        case .lofi: "Lo-Fi"
+        }
+    }
+}
+
 struct TopTrack {
     var title: String
     var votes: Int
@@ -49,6 +67,9 @@ struct MusicEvent: Identifiable {
     var isPublic: Bool = true
     var memberCount: Int = 0
     var nowPlaying: String? = nil
+    /// Genre of the track playing right now, from the track's metadata. It changes
+    /// with every song, since the crowd can vote anything in.
+    var nowPlayingGenre: Genre? = nil
     var imageData: Data? = nil
     var voteRule: VoteRule = .everyone
     var topTrack: TopTrack? = nil
@@ -59,6 +80,10 @@ struct MusicEvent: Identifiable {
     var isJoined: Bool = false
     var accessCode: String? = nil
     var canSeeDetails: Bool { isPublic || isMine || isJoined }
+
+    var playingGenre: Genre? {
+        isLive && canSeeDetails && nowPlaying != nil ? nowPlayingGenre : nil
+    }
 
     var isLive: Bool {
         startsAt <= .now && (endsAt.map { $0 > .now } ?? true)
@@ -91,13 +116,13 @@ extension MusicEvent {
         let hour: TimeInterval = 3600
         return [
             MusicEvent(name: "Friday Night", ownerName: "DJ Soda", memberCount: 200,
-                       nowPlaying: "Blinding Lights", topTrack: TopTrack(title: "Levitating", votes: 34),
+                       nowPlaying: "Blinding Lights", nowPlayingGenre: .disco, topTrack: TopTrack(title: "Levitating", votes: 34),
                        startsAt: .now - hour, endsAt: .now + 2 * hour),
             MusicEvent(name: "Orange House", ownerName: "Lawrance", isPublic: false, memberCount: 8,
-                       nowPlaying: "Mr Brightside", voteRule: .invitedOnly,
+                       nowPlaying: "Mr Brightside", nowPlayingGenre: .rock, voteRule: .invitedOnly,
                        startsAt: .now - 2 * hour, accessCode: "K7Q2M9"),
             MusicEvent(name: "Rooftop Sunset Set", ownerName: "Mess", memberCount: 42,
-                       nowPlaying: "Sunflower", voteRule: .onSite,
+                       nowPlaying: "Sunflower", nowPlayingGenre: .hipHop, voteRule: .onSite,
                        topTrack: TopTrack(title: "Golden Hour", votes: 12),
                        startsAt: .now - 0.5 * hour, endsAt: .now + 1.5 * hour,
                        locationName: "Marina Rooftop", isMine: true),
@@ -105,11 +130,11 @@ extension MusicEvent {
                        topTrack: TopTrack(title: "Snowman", votes: 3),
                        startsAt: .now + 3 * hour, endsAt: .now + 6 * hour, isMine: true),
             MusicEvent(name: "42 Campus Party", ownerName: "BDE 42", memberCount: 128,
-                       nowPlaying: "Titanium", voteRule: .onSite,
+                       nowPlaying: "Titanium", nowPlayingGenre: .electronic, voteRule: .onSite,
                        topTrack: TopTrack(title: "One More Time", votes: 57),
                        startsAt: .now - 3 * hour, endsAt: .now + 0.75 * hour, locationName: "42 Cluster"),
             MusicEvent(name: "Throwback Thursday", ownerName: "Nina", memberCount: 76,
-                       nowPlaying: "Smells Like Teen Spirit",
+                       nowPlaying: "Smells Like Teen Spirit", nowPlayingGenre: .rock,
                        topTrack: TopTrack(title: "Wonderwall", votes: 21),
                        startsAt: .now - hour),
             MusicEvent(name: "Gym Hype", ownerName: "Coach K", memberCount: 19,
@@ -118,8 +143,8 @@ extension MusicEvent {
             MusicEvent(name: "Wedding Reception", ownerName: "Aye & Min", isPublic: false, memberCount: 150,
                        voteRule: .invitedOnly, startsAt: .now + 30 * hour, accessCode: "WD8H3P"),
             MusicEvent(name: "Jazz Brunch", ownerName: "Blue Note", memberCount: 33,
-                       nowPlaying: "So What",
-                       startsAt: .now - 26 * hour, endsAt: .now - 22 * hour),
+                       nowPlaying: "So What", nowPlayingGenre: .jazz,
+                       startsAt: .now - 0.5 * hour, endsAt: .now + 2 * hour),
         ]
     }()
 }

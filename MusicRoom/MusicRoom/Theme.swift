@@ -28,6 +28,9 @@ extension Color {
         self.init(red: r, green: g, blue: b)
         
     }
+    init(light: String, dark: String) {
+        self.init(light: Color(hex: light), dark: Color(hex: dark))
+    }
 }
 
 
@@ -61,4 +64,40 @@ enum CustomColors {
         light: Color(hex: "E0DDD6"),
         dark: Color(hex: "2C2C2C")
     )
+}
+
+// MARK: - Genre moods
+
+struct GenreMood {
+    let gradient: [Color]
+    /// Text and icons tinted with the mood, readable in light and dark mode.
+    let accent: Color
+}
+
+extension Genre {
+    var mood: GenreMood {
+        switch self {
+        case .disco:
+            GenreMood(gradient: [Color(hex: "FF2BD6"), Color(hex: "00E5FF")],
+                      accent: Color(light: "C2189B", dark: "FF4FD8"))
+        case .electronic:
+            GenreMood(gradient: [Color(hex: "7B2FFF"), Color(hex: "00B3FF")],
+                      accent: Color(light: "6A2BE0", dark: "A57CFF"))
+        case .pop:
+            GenreMood(gradient: [Color(hex: "FF5E9C"), Color(hex: "FFB86B")],
+                      accent: Color(light: "D63A7A", dark: "FF7EB0"))
+        case .hipHop:
+            GenreMood(gradient: [Color(hex: "F5B700"), Color(hex: "7A4FD0")],
+                      accent: Color(light: "A87900", dark: "FFC93C"))
+        case .rock:
+            GenreMood(gradient: [Color(hex: "D7263D"), Color(hex: "3A3A3A")],
+                      accent: Color(light: "B81D30", dark: "FF5A6E"))
+        case .jazz:
+            GenreMood(gradient: [Color(hex: "3B5BA9"), Color(hex: "C8963E")],
+                      accent: Color(light: "2F4B8F", dark: "8FA8E8"))
+        case .lofi:
+            GenreMood(gradient: [Color(hex: "A79BD9"), Color(hex: "9CC5A1")],
+                      accent: Color(light: "6E61A8", dark: "B9AEF0"))
+        }
+    }
 }

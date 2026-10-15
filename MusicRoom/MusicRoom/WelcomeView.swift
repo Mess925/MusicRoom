@@ -63,7 +63,7 @@ struct WelcomeView : View {
                             .foregroundStyle(CustomColors.textPrimary)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(CustomColors.divider, lineWidth: 5)
+                                    .stroke(CustomColors.divider, lineWidth: 1)
                             )
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
